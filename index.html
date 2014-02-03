@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+
+    <title>Vagrant at Think Through Math</title>
+
+    <meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+    <meta name="author" content="Hakim El Hattab">
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="css/reveal.min.css">
+    <link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+    <!-- For syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+    <script>
+      document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="reveal">
+
+      <!-- Any section element inside of this container is displayed as a slide -->
+      <div class="slides">
+
+        <section>
+          <h1>Vagrant at TTM</h1>
+          Make development awesomer.
+        </section>
+
+        <section>
+          <h2>The 50,000 Foot View: Goals</h2>
+          <ul>
+            <li class="fragment">All develpers have a common environment</li>
+            <li class="fragment">Setting up the application is scripted & repeatable</li>
+            <li class="fragment">Multiple copies of the application
+              <ul>
+                <li>possible on single machine</li>
+                <li>can be set up easily</li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>The basic workflow</h2>
+          <ol>
+            <li>Acquire the `vagrant-environment` repository.</li>
+            (the initial bootstrap command)
+            <li>Run the `install-osx-host-software.sh` command.</li>
+            (install Vagrant and Virtualbox)
+            <li>Run 'vagrant up'.</li>
+            (Create a Virtual machine)
+            <li>Create and fill in an `env` file.</li>
+            (We need to know your scalr credentials, where your ssh private key is, etc)
+            <li>Run the 'setup.sh' command.</li>
+            (We need to know your scalr credentials)
+            <li>Start Working</li>
+          </ol>
+        </section>
+
+
+        <section>
+          <h2>30,000 Foot View:</h2>
+          <h3>The Players</h3>
+          <ul>
+            <li>Virtualization Software</li>
+            <li>Vagrant</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>30,000 Foot View:</h2>
+          <h3>Virtualization Software</h3>
+          <ul>
+            <li>Guest vs Host</li>
+            <li>Virtualbox vs VMWare</li>
+          </ul>
+        </section>
+
+
+        <section>
+          <h2>30,000 Foot View:</h2>
+          <h3>Vagrant</h3>
+
+          Provides:
+          <ul>
+            <li>`vagrant` commands to control VMs</li>
+            (vagrant up, vagrant halt, vagrant ssh)
+            <li>A `Vagrantfile` system to configure the VMs</li>
+            (Base Box, forwarded ports, shared directories, provisioning)
+          </ul>
+        </section>
+
+
+        <section>
+          <h2>10,000 Foot View:</h2>
+          <h3>Vagrant Details</h3>
+          <ul>
+            <li>Vagrant commands</li>
+            <li>Vagrant Boxes</li>
+          </ul>
+        </section>
+
+
+        <section>
+          <h2>10,000 Foot View:</h2>
+          <h3>Vagrant Commands</h3>
+          <ul>
+            <li>`vagrant up`</li>
+            <li>`vagrant ssh`</li>
+            <li>`vagrant halt`</li>
+            <li>`vagrant destroy`</li>
+          </ul>
+        </section>
+
+
+
+        <section>
+          <h2>Vagrant Boxes</h2>
+          A VM Image with specific conventions.
+          <ul>
+            <li>The vagrant user</li>
+            <li>Installed vagrant ssh key</li>
+            <li>Correct sudo permissions</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Runway</h2>
+          <h3>Our Implementation</h3>
+          <ul>
+            <li>Vagrantfile highlights</li>
+            <li>Provisioning</li>
+            <li>The env file</li>
+            <li>Setup.sh</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>Our Implementation: Vagrantfile highlights</h3>
+          <pre><code data-trim contenteditable>
+Vagrant.configure("2") do |config|
+
+  config.vm.box     = "precise64"
+  config.vm.box_url = "http://files.vagrantup.com/precise64.box"
+
+  config.vm.provision :shell, path: 'provision.sh'
+
+  # rails
+  config.vm.network "forwarded_port", guest: 3000, host: 3002
+
+  # live teaching
+  config.vm.network "forwarded_port", guest: 5000, host: 5002
+
+  # ttm-coffeescript-math
+  config.vm.network "forwarded_port", guest: 9000, host: 9002
+
+  # Give VM 2 gigs of memory
+  config.vm.provider "virtualbox" do |vb|
+    vb.customize ["modifyvm", :id, "--memory", "2048"]
+  end
+
+  # Use synced filesystem
+  config.vm.synced_folder ".", "/vagrant", nfs: true
+
+  # ...
+end
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Our Implementation: Provisioning</h3>
+          <p>Installs:</p>
+          <ul>
+            <li>Postgres</li>
+            <li>PhantomJS</li>
+            <li>Redis</li>
+            <li>... and anything else needed from apt</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>Our Implementation: env file</h3>
+          <p>Configuration to give the VM your data:</p>
+          <ul>
+            <li>The private key to communicate with Github</li>
+            <li>Your Scalr credentials, so we can access production data</li>
+            <li>The Branch to clone apangea from</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>Our Implementation: setup.sh</h3>
+          <p>Everything else</p>
+          <ol>
+            <li>Copies data found in env.</li>
+            <li>Installs RVM and software</li>
+            <li>Clones &amp; prepares an apangea repository, essentially following the apangea README</li>
+          </ol>
+        </section>
+
+        <section>
+          <h2>Caveat Emptor: Problems</h2>
+          <ul>
+            <li>Manual fiddling required</li>
+            <li>Possible performance issues</li>
+            <li>Takes time to get used to</li>
+            <li>More?</li>
+          </ul>
+        </section>
+
+        <section>
+          <h1>End</h1>
+          Questions?
+        </section>
+      </div>
+
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.min.js"></script>
+
+    <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+
+        theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Parallax scrolling
+        // parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+        // parallaxBackgroundSize: '2100px 900px',
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+          { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+          { src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+          { src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+        ]
+      });
+
+    </script>
+
+  </body>
+</html>
